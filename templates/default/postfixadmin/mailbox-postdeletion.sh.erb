@@ -1,0 +1,53 @@
+#!/bin/sh
+mailbox_dir=<%= @mailbox_dir %>
+mailbox_trash_dir=<%= @mailbox_trash_dir %>
+
+sieve_dir=<%= @sieve_dir %>
+sieve_trash_dir=<%= @sieve_trash_dir %>
+
+if [ ! -e "$mailbox_trash_dir" ]; then
+    echo "trashbase '$mailbox_trash_dir' does not exist; bailing out."
+    exit 1
+fi
+
+if [ ! -e "$sieve_trash_dir" ]; then
+    echo "trashbase '$sieve_trash_dir' does not exist; bailing out."
+    exit 1
+fi
+
+username=`echo "$1" | sed 's/@.*//'`
+
+user_mailbox_dir="${mailbox_dir}/$2/${username}"
+user_mailbox_trash_dir="${mailbox_trash_dir}/$2__${username}__`date +%Y-%m-%d__%H_%M_%S`"
+user_sieve_dir="${sieve_dir}/$2/${username}"
+user_sieve_trash_dir="${sieve_trash_dir}/$2__${username}__`date +%Y-%m-%d__%H_%M_%S`"
+
+if [ ! -e "$user_mailbox_dir" ]; then
+    echo "Directory '$user_mailbox_dir' does not exist; nothing to do."
+    exit 0;
+fi
+if [ ! -d "$user_mailbox_dir" ]; then
+    echo "'$user_mailbox_dir' is not a directory; bailing out."
+    exit 1
+fi
+if [ ! -e "$user_sieve_dir" ]; then
+    echo "Directory '$user_sieve_dir' does not exist; nothing to do."
+    exit 0;
+fi
+if [ ! -d "$user_sieve_dir" ]; then
+    echo "'$user_sieve_dir' is not a directory; bailing out."
+    exit 1
+fi
+if [ -e "$user_mailbox_trash_dir" ]; then
+    echo "Directory '$user_mailbox_trash_dir' already exists; bailing out."
+    exit 1;
+fi
+if [ -e "$user_sieve_trash_dir" ]; then
+    echo "Directory '$user_sieve_trash_dir' already exists; bailing out."
+    exit 1;
+fi
+
+mv $user_mailbox_dir $user_mailbox_trash_dir
+mv $user_sieve_dir $user_sieve_trash_dir
+
+exit $?

@@ -1,0 +1,18 @@
+#!/bin/bash
+PERCENT=$1
+USER=$2
+if [ "$PERCENT" = "below" ]; then
+  cat << EOF | <%= @dovecot_lda_bin %> -d $USER -o "plugin/quota=maildir:User quota:noenforcing"
+From: Postmaster <<%= @postmaster %>>
+Subject: Mailbox quota
+
+Your mailbox is no longer full.
+EOF
+else
+  cat << EOF | <%= @dovecot_lda_bin %> -d $USER -o "plugin/quota=maildir:User quota:noenforcing"
+From: Postmaster <<%= @postmaster %>>
+Subject: Mailbox quota warning
+
+Your mailbox is now $PERCENT% full.
+EOF
+fi

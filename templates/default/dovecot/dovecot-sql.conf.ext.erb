@@ -1,0 +1,11 @@
+driver = pgsql
+
+connect = host=<%= @host %> port=<%= @port %> dbname=<%= @dbname %> user=<%= @user %> password=<%= @password %>
+
+default_pass_scheme = ARGON2ID
+
+password_query = SELECT username AS user, password FROM mailbox WHERE username = '%u' AND active = true
+
+user_query = SELECT maildir, <%= @vmail_uid %> AS uid, <%= @vmail_gid %> AS gid, '*:bytes=' || quota AS quota_rule FROM mailbox WHERE username = '%u' AND active is true
+
+iterate_query = SELECT username AS user FROM mailbox

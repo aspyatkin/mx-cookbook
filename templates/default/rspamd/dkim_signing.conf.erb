@@ -1,0 +1,10 @@
+allow_username_mismatch = true;
+
+domain {
+  <% @dkim_data.each do |entry| -%>
+  <%= entry[:domain] %> {
+    path = "<%= entry[:path] %>";
+    selector = "<%= entry[:selector] %>";
+  }
+  <% end -%>
+}

@@ -1,0 +1,11 @@
+#!/usr/bin/expect
+set timeout -1
+log_user 0
+spawn rspamadm pw -c
+expect "Enter encrypted password:"
+send -- "$env(ENCRYPTED_PASSWORD)\n"
+expect "Enter passphrase:"
+send -- "$env(INPUT_PASSWORD)\n"
+expect -re "\npassword (.*)\n"
+set r $expect_out(1,string)
+puts $r

@@ -1,0 +1,157 @@
+# See /usr/share/postfix/main.cf.dist for a commented, more complete version
+
+myhostname = <%= @fqdn %>
+mydomain = <%= @fqdn.split('.')[1..].join('.') %>
+mynetworks = 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128
+inet_interfaces = all
+inet_protocols = all
+
+# Debian specific:  Specifying a file name will cause the first
+# line of that file to be used as the name.  The Debian default
+# is /etc/mailname.
+myorigin = $myhostname
+mydestination = $myhostname
+
+##
+## Mail queue settings
+##
+
+maximal_queue_lifetime = 1h
+bounce_queue_lifetime = 1h
+maximal_backoff_time = 15m
+minimal_backoff_time = 5m
+queue_run_delay = 5m
+
+smtpd_banner = $myhostname ESMTP $mail_name (Ubuntu)
+
+# Uncomment the next line to generate "delayed mail" warnings
+#delay_warning_time = 4h
+
+readme_directory = no
+
+# See http://www.postfix.org/COMPATIBILITY_README.html -- default to 2 on
+# fresh installs.
+compatibility_level = 2
+
+##
+## TLS settings
+###
+
+tls_preempt_cipherlist = yes
+tls_ssl_options = NO_COMPRESSION
+
+smtp_tls_security_level = may
+smtp_tls_loglevel = 1
+smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
+smtp_tls_protocols = !SSLv2, !SSLv3, !TLSv1, !TLSv1.1
+smtp_tls_mandatory_protocols = !SSLv2, !SSLv3, !TLSv1, !TLSv1.1
+smtp_tls_ciphers = high
+smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt
+
+alias_maps = hash:/etc/aliases
+alias_database = hash:/etc/aliases
+relayhost =
+
+#Enable TLS Encryption when Postfix receives incoming emails
+# CRC32: <%= @rsa_certificate_entry.certificate_checksum %>
+smtpd_tls_cert_file = <%= @rsa_certificate_entry.certificate_path %>
+# CRC32: <%= @rsa_certificate_entry.certificate_private_key_checksum %>
+smtpd_tls_key_file = <%= @rsa_certificate_entry.certificate_private_key_path %>
+<% unless @ecc_certificate_entry.nil? %>
+# CRC32: <%= @ecc_certificate_entry.certificate_checksum %>
+smtpd_tls_eccert_file = <%= @ecc_certificate_entry.certificate_path %>
+# CRC32: <%= @ecc_certificate_entry.certificate_private_key_checksum %>
+smtpd_tls_eckey_file = <%= @ecc_certificate_entry.certificate_private_key_path %>
+<% end %>
+smtpd_tls_security_level = may
+smtpd_tls_loglevel = 1
+smtpd_tls_session_cache_database = btree:${data_directory}/smtpd_scache
+smtpd_tls_protocols = !SSLv2, !SSLv3, !TLSv1, !TLSv1.1
+smtpd_tls_mandatory_protocols = !SSLv2, !SSLv3, !TLSv1, !TLSv1.1
+smtpd_tls_ciphers = high
+
+smtputf8_enable = no
+
+virtual_mailbox_domains = <%= @virtual_mailbox_domains.join(', ') %>
+virtual_mailbox_maps = <%= @virtual_mailbox_maps.join(', ') %>
+virtual_alias_maps = <%= @virtual_alias_maps.join(', ') %>
+
+virtual_transport = lmtp:unix:private/dovecot-lmtp
+
+##
+## Spam filter and DKIM signatures via Rspamd
+##
+
+smtpd_milters = inet:<%= @milter_host %>:<%= @milter_port %>
+non_smtpd_milters = inet:<%= @milter_host %>:<%= @milter_port %>
+milter_protocol = 6
+milter_mail_macros =  i {mail_addr} {client_addr} {client_name} {auth_authen}
+milter_default_action = accept
+
+##
+## Server Restrictions for clients, cecipients and relaying
+## (concerning S2S-connections. Mailclient-connections are configured in submission-section in master.cf)
+##
+
+### Conditions in which Postfix works as a relay. (for mail user clients)
+smtpd_relay_restrictions =      reject_non_fqdn_recipient
+                                reject_unknown_recipient_domain
+                                permit_mynetworks
+                                reject_unauth_destination
+
+### Restrictions for all sending foreign servers ("SMTP clients")
+smtpd_client_restrictions =     permit_mynetworks
+                                reject_unknown_client_hostname
+
+### Foreign mail servers must present a valid "HELO"
+smtpd_helo_required = yes
+smtpd_helo_restrictions =   permit_mynetworks
+                            reject_invalid_helo_hostname
+                            reject_non_fqdn_helo_hostname
+                            reject_unknown_helo_hostname
+
+# Block clients, which start sending too early
+smtpd_data_restrictions = reject_unauth_pipelining
+
+##
+## Restrictions for MUAs (Mail user agents)
+##
+
+mua_relay_restrictions = reject_non_fqdn_recipient,reject_unknown_recipient_domain,permit_mynetworks,permit_sasl_authenticated,reject
+mua_sender_restrictions = permit_mynetworks,reject_non_fqdn_sender,reject_sender_login_mismatch,permit_sasl_authenticated,reject
+mua_client_restrictions = permit_mynetworks,permit_sasl_authenticated,reject
+
+postscreen_cache_map = btree:$data_directory/postscreen_cache
+
+### Postscreen Whitelist / Blocklist
+postscreen_access_list = permit_mynetworks cidr:<%= @postscreen_access %>
+postscreen_blacklist_action = drop
+
+
+# Drop connections if other server is sending too quickly
+postscreen_greet_action = drop
+
+### DNS blocklists
+#postscreen_dnsbl_threshold = 2
+#postscreen_dnsbl_sites =    ix.dnsbl.manitu.net*2
+#                            zen.spamhaus.org*2
+#postscreen_dnsbl_action = drop
+
+##
+## Miscellaneous
+##
+
+### Maximum mailbox size (0=unlimited - is already limited by Dovecot quota)
+mailbox_size_limit = 0
+
+### Maximum size of inbound e-mails (50 MB)
+message_size_limit = 52428800
+
+### Do not notify system users on new e-mail
+biff = no
+
+### Users always have to provide full e-mail addresses
+append_dot_mydomain = no
+
+### Delimiter for "Address Tagging"
+recipient_delimiter = +

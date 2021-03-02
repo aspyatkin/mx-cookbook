@@ -1,0 +1,6 @@
+version: STSv1
+mode: <%= @mode %>
+<% @mx.each do |fqdn| -%>
+mx: <%= fqdn %>
+<% end -%>
+max_age: <%= @max_age %>

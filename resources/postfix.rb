@@ -25,6 +25,9 @@ property :vlt_format, Integer, default: 2
 property :postmaster, String, required: true
 property :pflogsumm_report, Hash, default: {}
 
+property :dh512_param_file, String, required: true
+property :dh_param_file, String, required: true
+
 action :setup do
   unless node.run_state.key?('mx')
     node.run_state['mx'] = {}
@@ -232,7 +235,9 @@ action :setup do
       virtual_alias_maps: virtual_alias_maps,
       milter_host: new_resource.milter_host,
       milter_port: new_resource.milter_port,
-      postscreen_access: postscreen_access
+      postscreen_access: postscreen_access,
+      dh512_param_file: new_resource.dh512_param_file,
+      dh_param_file: new_resource.dh_param_file
     )
     action :create
     notifies :restart, 'service[postfix]', :delayed
@@ -277,7 +282,7 @@ action :setup do
   package 'pflogsumm'
 
   cron 'send pflogsumm report' do
-    command %(/usr/sbin/pflogsumm -d yesterday /var/log/mail.log --problems-first --rej-add-from --verbose-msg-detail -q | /usr/bin/mail -s "Pflogsumm report" -a "From: #{new_resource.postmaster}" #{new_resource.pflogsumm_report['mailto']})
+    command %(/usr/sbin/pflogsumm /var/log/mail.log.0 --problems-first --rej-add-from --verbose-msg-detail -q | /usr/bin/mail -s "Pflogsumm report" -a "From: #{new_resource.postmaster}" #{new_resource.pflogsumm_report['mailto']})
     minute new_resource.pflogsumm_report['minute']
     hour new_resource.pflogsumm_report['hour']
     day new_resource.pflogsumm_report['day']

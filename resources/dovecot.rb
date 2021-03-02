@@ -21,6 +21,8 @@ property :vlt_format, Integer, default: 2
 
 property :postmaster, String, required: true
 
+property :dh_param_file, String, required: true
+
 action :setup do
   package 'dovecot-core'
   package 'dovecot-imapd'
@@ -153,6 +155,7 @@ action :setup do
     source 'dovecot/10-ssl.conf.erb'
     mode '0644'
     variables(
+      dh_param_file: new_resource.dh_param_file,
       rsa_certificate_entry: tls.rsa_certificate_entry(new_resource.fqdn),
       ecc_certificate_entry: tls.has_ec_certificate?(new_resource.fqdn) ? tls.ec_certificate_entry(new_resource.fqdn) : nil
     )
@@ -170,6 +173,14 @@ action :setup do
       postfix_user: new_resource.postfix_state['user'],
       postfix_group: new_resource.postfix_state['group']
     )
+    action :create
+    notifies :restart, 'service[dovecot]', :delayed
+  end
+
+  template '/etc/dovecot/conf.d/10-logging.conf' do
+    cookbook 'mx'
+    source 'dovecot/10-logging.conf.erb'
+    mode '0644'
     action :create
     notifies :restart, 'service[dovecot]', :delayed
   end

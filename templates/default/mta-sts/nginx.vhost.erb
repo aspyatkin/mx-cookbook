@@ -1,5 +1,6 @@
 server {
   listen <%= @listen.nil? ? '' : "#{@listen}:" %>80<%= @default_server ? ' default_server' : '' %>;
+  listen <%= @listen_ipv6.nil? ? '' : "#{@listen_ipv6}:" %>80<%= @default_server ? ' default_server' : '' %>;
   server_name <%= @fqdn %>;
 
   location / {
@@ -9,6 +10,7 @@ server {
 
 server {
   listen <%= @listen.nil? ? '' : "#{@listen}:" %>443 ssl http2<%= @default_server ? ' default_server' : '' %>;
+  listen <%= @listen_ipv6.nil? ? '' : "#{@listen_ipv6}:" %>443 ssl http2<%= @default_server ? ' default_server' : '' %>;
   server_name <%= @fqdn %>;
 
   <% if @access_log_options == 'off' %>

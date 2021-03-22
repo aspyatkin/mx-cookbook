@@ -1,0 +1,10 @@
+local_wl_postmaster {
+    type = "from";
+    filter = "email:addr";
+    map = "<%= @local_wl_postmaster_map %>";
+    symbol = "LOCAL_WL_POSTMASTER";
+    regex = true;
+    prefilter = true;
+    score = -6.0;
+    description = "Whitelist map for LOCAL_WL_POSTMASTER";
+}

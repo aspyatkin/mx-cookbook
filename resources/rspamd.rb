@@ -34,6 +34,7 @@ property :user, String, default: '_rspamd'
 property :group, String, default: '_rspamd'
 
 property :nameservers, Array, required: true
+property :postmaster, String, required: true
 
 action :setup do
   unless node.run_state.key?('mx')
@@ -251,6 +252,34 @@ action :setup do
     mode '0644'
     variables(
       dkim_data: dkim_data
+    )
+    action :create
+    notifies :reload, 'service[rspamd]', :delayed
+  end
+
+  local_wl_postmaster_map = ::File.join(rspamd_dir, 'local.d', 'local_wl_postmaster.map')
+
+  template local_wl_postmaster_map do
+    cookbook 'mx'
+    source 'rspamd/local_wl_postmaster.map.erb'
+    owner 'root'
+    group node['root_group']
+    mode '0644'
+    variables(
+      postmaster: new_resource.postmaster
+    )
+    action :create
+    notifies :reload, 'service[rspamd]', :delayed
+  end
+
+  template ::File.join(rspamd_dir, 'local.d', 'multimap.conf') do
+    cookbook 'mx'
+    source 'rspamd/multimap.conf.erb'
+    owner 'root'
+    group node['root_group']
+    mode '0644'
+    variables(
+      local_wl_postmaster_map: local_wl_postmaster_map
     )
     action :create
     notifies :reload, 'service[rspamd]', :delayed

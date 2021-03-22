@@ -5,6 +5,7 @@ default_action :setup
 
 property :fqdn, String, required: true
 property :listen, [String, NilClass]
+property :listen_ipv6, [String, NilClass]
 property :default_server, [true, false], default: false
 property :access_log_options, String, default: 'combined'
 property :error_log_options, String, default: 'error'
@@ -31,6 +32,7 @@ action :setup do
   vhost_vars = {
     fqdn: new_resource.fqdn,
     listen: new_resource.listen,
+    listen_ipv6: new_resource.listen_ipv6,
     default_server: new_resource.default_server,
     access_log_options: new_resource.access_log_options,
     error_log_options: new_resource.error_log_options,

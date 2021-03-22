@@ -23,6 +23,19 @@ property :postmaster, String, required: true
 
 property :dh_param_file, String, required: true
 
+property :imap_mail_max_userip_connections, Integer, default: 10
+
+property :imap_login_service_count, Integer, default: 1
+property :imap_login_process_min_avail, Integer, default: 0
+property :imap_login_process_limit, [String, Integer], default: '$default_process_limit'
+property :imap_login_vsz_limit, String, default: '64M'
+
+property :pop3, [true, false], default: false
+property :pop3_login_service_count, Integer, default: 1
+property :pop3_lock_session, [true, false], default: true
+property :pop3_fast_size_lookups, [true, false], default: true
+property :pop3_no_flag_updates, [true, false], default: true
+
 action :setup do
   package 'dovecot-core'
   package 'dovecot-imapd'
@@ -30,6 +43,10 @@ action :setup do
   package 'dovecot-pgsql'
   package 'dovecot-sieve'
   package 'dovecot-managesieved'
+
+  if new_resource.pop3
+    package 'dovecot-pop3d'
+  end
 
   service 'dovecot' do
     action [:enable, :start]
@@ -102,11 +119,18 @@ action :setup do
     notifies :restart, 'service[dovecot]', :delayed
   end
 
+  dovecot_protocols = %w[imap lmtp sieve]
+
+  if new_resource.pop3
+    dovecot_protocols << 'pop3'
+  end
+
   template '/etc/dovecot/local.conf' do
     cookbook 'mx'
     source 'dovecot/local.conf.erb'
     mode '0644'
     variables(
+      protocols: dovecot_protocols,
       dict_sql_conf: dict_sql_conf
     )
     action :create
@@ -171,7 +195,12 @@ action :setup do
       vmail_user: new_resource.vmail_state['user'],
       vmail_group: new_resource.vmail_state['group'],
       postfix_user: new_resource.postfix_state['user'],
-      postfix_group: new_resource.postfix_state['group']
+      postfix_group: new_resource.postfix_state['group'],
+      imap_login_service_count: new_resource.imap_login_service_count,
+      imap_login_process_min_avail: new_resource.imap_login_process_min_avail,
+      imap_login_process_limit: new_resource.imap_login_process_limit,
+      imap_login_vsz_limit: new_resource.imap_login_vsz_limit,
+      pop3_login_service_count: new_resource.pop3_login_service_count
     )
     action :create
     notifies :restart, 'service[dovecot]', :delayed
@@ -197,8 +226,26 @@ action :setup do
     cookbook 'mx'
     source 'dovecot/20-imap.conf.erb'
     mode '0644'
+    variables(
+      mail_max_userip_connections: new_resource.imap_mail_max_userip_connections
+    )
     action :create
     notifies :restart, 'service[dovecot]', :delayed
+  end
+
+  if new_resource.pop3
+    template '/etc/dovecot/conf.d/20-pop3.conf' do
+      cookbook 'mx'
+      source 'dovecot/20-pop3.conf.erb'
+      mode '0644'
+      variables(
+        pop3_lock_session: new_resource.pop3_lock_session,
+        pop3_fast_size_lookups: new_resource.pop3_fast_size_lookups,
+        pop3_no_flag_updates: new_resource.pop3_no_flag_updates
+      )
+      action :create
+      notifies :restart, 'service[dovecot]', :delayed
+    end
   end
 
   template '/etc/dovecot/conf.d/20-lmtp.conf' do

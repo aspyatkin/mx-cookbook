@@ -1,5 +1,3 @@
-# See /usr/share/postfix/main.cf.dist for a commented, more complete version
-
 myhostname = <%= @fqdn %>
 mydomain = <%= @fqdn.split('.')[1..].join('.') %>
 mynetworks = 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128
@@ -93,7 +91,7 @@ milter_mail_macros =  i {mail_addr} {client_addr} {client_name} {auth_authen}
 milter_default_action = accept
 
 ##
-## Server Restrictions for clients, cecipients and relaying
+## Server Restrictions for clients, recipients and relaying
 ## (concerning S2S-connections. Mailclient-connections are configured in submission-section in master.cf)
 ##
 
@@ -105,7 +103,7 @@ smtpd_relay_restrictions =      reject_non_fqdn_recipient
 
 ### Restrictions for all sending foreign servers ("SMTP clients")
 smtpd_client_restrictions =     permit_mynetworks
-                                reject_unknown_client_hostname
+#                                reject_unknown_client_hostname
 
 ### Foreign mail servers must present a valid "HELO"
 smtpd_helo_required = yes

@@ -2,7 +2,7 @@ name 'mx'
 maintainer 'Alexander Pyatkin'
 maintainer_email 'aspyatkin@gmail.com'
 license 'MIT'
-version '0.3.2'
+version '0.3.3'
 description 'Install and configure a mail server'
 
 source_url 'https://github.com/aspyatkin/mx-cookbook'

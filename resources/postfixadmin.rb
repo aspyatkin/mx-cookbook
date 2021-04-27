@@ -231,4 +231,35 @@ action :setup do
     end)
     action :enable
   end
+
+  postfixadmin_dir = '/etc/postfixadmin'
+
+  directory postfixadmin_dir do
+    owner new_resource.user
+    group new_resource.group
+    recursive false
+    mode '0700'
+    action :create
+  end
+
+  create_extra_tables_script = ::File.join(postfixadmin_dir, 'create_extra_tables.sql')
+
+  template create_extra_tables_script do
+    cookbook 'mx'
+    source 'postfixadmin/create_extra_tables.sql.erb'
+    owner new_resource.user
+    group new_resource.group
+    mode '0640'
+  end
+
+  execute 'create postfixadmin extra tables' do
+    command "psql -h #{new_resource.db_host} -p #{new_resource.db_port} -U #{new_resource.db_user} -d #{new_resource.db_name} -f #{create_extra_tables_script}"
+    user new_resource.user
+    group new_resource.group
+    environment(
+      'PGPASSWORD' => new_resource.db_password
+    )
+    sensitive true
+    action :run
+  end
 end

@@ -2,4 +2,4 @@ user = <%= @user %>
 password = <%= @password %>
 hosts = <%= @host %>:<%= @port %>
 dbname = <%= @dbname %>
-query = SELECT username FROM mailbox WHERE username='%s' AND active = true UNION SELECT goto FROM alias WHERE address='%s' AND active = true
+query = SELECT username FROM mailbox WHERE username='%s' AND active = true UNION SELECT goto FROM alias WHERE address='%s' AND active = true UNION SELECT address FROM extra_smtp_from WHERE smtp_from='%s'

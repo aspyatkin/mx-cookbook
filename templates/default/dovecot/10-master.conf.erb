@@ -135,3 +135,18 @@ service stats {
      mode = 0666
    }
 }
+<% if @old_stats_enabled %>
+
+service old-stats {
+  inet_listener {
+    address = <%= @old_stats_host %>
+    port = <%= @old_stats_port %>
+  }
+
+  fifo_listener old-stats-mail {
+    user = <%= @vmail_user %>
+    group = <%= @vmail_group %>
+    mode = 0600
+  }
+}
+<% end %>

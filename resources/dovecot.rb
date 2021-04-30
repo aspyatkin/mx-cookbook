@@ -36,6 +36,12 @@ property :pop3_lock_session, [true, false], default: true
 property :pop3_fast_size_lookups, [true, false], default: true
 property :pop3_no_flag_updates, [true, false], default: true
 
+property :old_stats_enabled, [true, false], default: false
+property :old_stats_host, String, default: '127.0.0.1'
+property :old_stats_port, Integer, default: 24242
+property :old_stats_refresh, Integer, default: 1  # seconds
+property :old_stats_track_cmds, [true, false], default: true
+
 action :setup do
   package 'dovecot-core'
   package 'dovecot-imapd'
@@ -144,7 +150,8 @@ action :setup do
     variables(
       vmail_mailbox_dir: new_resource.vmail_state['mailbox_dir'],
       vmail_user: new_resource.vmail_state['user'],
-      vmail_group: new_resource.vmail_state['group']
+      vmail_group: new_resource.vmail_state['group'],
+      old_stats_enabled: new_resource.old_stats_enabled
     )
     action :create
     notifies :restart, 'service[dovecot]', :delayed
@@ -200,7 +207,10 @@ action :setup do
       imap_login_process_min_avail: new_resource.imap_login_process_min_avail,
       imap_login_process_limit: new_resource.imap_login_process_limit,
       imap_login_vsz_limit: new_resource.imap_login_vsz_limit,
-      pop3_login_service_count: new_resource.pop3_login_service_count
+      pop3_login_service_count: new_resource.pop3_login_service_count,
+      old_stats_enabled: new_resource.old_stats_enabled,
+      old_stats_host: new_resource.old_stats_host,
+      old_stats_port: new_resource.old_stats_port
     )
     action :create
     notifies :restart, 'service[dovecot]', :delayed
@@ -227,7 +237,8 @@ action :setup do
     source 'dovecot/20-imap.conf.erb'
     mode '0644'
     variables(
-      mail_max_userip_connections: new_resource.imap_mail_max_userip_connections
+      mail_max_userip_connections: new_resource.imap_mail_max_userip_connections,
+      old_stats_enabled: new_resource.old_stats_enabled
     )
     action :create
     notifies :restart, 'service[dovecot]', :delayed
@@ -333,6 +344,19 @@ action :setup do
       vmail_user: new_resource.vmail_state['user'],
       vmail_group: new_resource.vmail_state['group'],
       script_quota_warning: script_quota_warning
+    )
+    action :create
+    notifies :restart, 'service[dovecot]', :delayed
+  end
+
+  template '/etc/dovecot/conf.d/90-plugin.conf' do
+    cookbook 'mx'
+    source 'dovecot/90-plugin.conf.erb'
+    mode '0644'
+    variables(
+      old_stats_enabled: new_resource.old_stats_enabled,
+      old_stats_refresh: new_resource.old_stats_refresh,
+      old_stats_track_cmds: new_resource.old_stats_track_cmds
     )
     action :create
     notifies :restart, 'service[dovecot]', :delayed

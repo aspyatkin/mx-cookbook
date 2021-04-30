@@ -1,0 +1,27 @@
+##
+## Plugin settings
+##
+
+# All wanted plugins must be listed in mail_plugins setting before any of the
+# settings take effect. See <doc/wiki/Plugins.txt> for list of plugins and
+# their configuration. Note that %variable expansion is done for all values.
+
+plugin {
+  #setting_name = value
+}
+
+<% if @old_stats_enabled %>
+plugin {
+  # how often to session statistics (must be set)
+  old_stats_refresh = <%= @old_stats_refresh %> secs
+  # track per-IMAP command statistics (optional)
+  old_stats_track_cmds = <%= @old_stats_track_cmds ? 'yes' : 'no' %>
+
+  old_stats_memory_limit = 16 M
+  old_stats_command_min_time = 1 mins
+  old_stats_domain_min_time = 12 hours
+  old_stats_ip_min_time = 12 hours
+  old_stats_session_min_time = 15 mins
+  old_stats_user_min_time = 1 hours
+}
+<% end %>

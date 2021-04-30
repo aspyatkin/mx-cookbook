@@ -217,7 +217,7 @@ mail_privileged_group = <%= @vmail_group %>
 
 # Space separated list of plugins to load for all services. Plugins specific to
 # IMAP, LDA, etc. are added to this list in their own .conf files.
-mail_plugins = quota
+mail_plugins = quota<%= @old_stats_enabled ? ' old_stats' : '' %>
 
 ##
 ## Mailbox handling optimizations

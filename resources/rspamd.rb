@@ -35,6 +35,7 @@ property :group, String, default: '_rspamd'
 
 property :nameservers, Array, required: true
 property :postmaster, String, required: true
+property :postmaster_score, Float, default: -15.0
 
 action :setup do
   unless node.run_state.key?('mx')
@@ -279,7 +280,8 @@ action :setup do
     group node['root_group']
     mode '0644'
     variables(
-      local_wl_postmaster_map: local_wl_postmaster_map
+      local_wl_postmaster_map: local_wl_postmaster_map,
+      score: new_resource.postmaster_score
     )
     action :create
     notifies :reload, 'service[rspamd]', :delayed

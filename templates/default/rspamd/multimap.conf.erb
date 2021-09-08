@@ -1,10 +1,8 @@
-local_wl_postmaster {
-    type = "from";
-    filter = "email:addr";
-    map = "<%= @local_wl_postmaster_map %>";
-    symbol = "LOCAL_WL_POSTMASTER";
-    regex = true;
-    prefilter = true;
-    score = <%= @score.to_s %>;
-    description = "Whitelist map for LOCAL_WL_POSTMASTER";
+<% @entries.each do |entry| %>
+<%= entry[:name] %> {
+  map = "<%= entry[:map] %>";
+  <% entry.reject { |key| key == :name || key == :map }.each do |prop_name, prop_val| %>
+  <%= prop_name %> = <% if prop_val.is_a?(String) %>"<% end %><%= prop_val %><% if prop_val.is_a?(String) %>"<% end %>;
+  <% end %>
 }
+<% end %>

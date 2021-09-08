@@ -1,7 +1,11 @@
+# frozen_string_literal: true
+
 resource_name :mx_rspamd
 provides :mx_rspamd
 
 default_action :setup
+
+property :rspamd_dir, String, default: '/etc/rspamd'
 
 property :password, String, required: true
 
@@ -34,8 +38,6 @@ property :user, String, default: '_rspamd'
 property :group, String, default: '_rspamd'
 
 property :nameservers, Array, required: true
-property :postmaster, String, required: true
-property :postmaster_score, Float, default: -15.0
 
 action :setup do
   unless node.run_state.key?('mx')
@@ -65,9 +67,7 @@ action :setup do
     action [:enable, :start]
   end
 
-  rspamd_dir = '/etc/rspamd'
-
-  template ::File.join(rspamd_dir, 'local.d', 'options.inc') do
+  template ::File.join(new_resource.rspamd_dir, 'local.d', 'options.inc') do
     cookbook 'mx'
     source 'rspamd/options.inc.erb'
     owner 'root'
@@ -100,7 +100,7 @@ action :setup do
     action :create
   end
 
-  worker_controller_inc = ::File.join(rspamd_dir, 'local.d', 'worker-controller.inc')
+  worker_controller_inc = ::File.join(new_resource.rspamd_dir, 'local.d', 'worker-controller.inc')
 
   template worker_controller_inc do
     cookbook 'mx'
@@ -119,7 +119,7 @@ action :setup do
     not_if { ::ChefCookbook::Mx::Rspamd.checkpw?(new_resource.password, worker_controller_inc) }
   end
 
-  template ::File.join(rspamd_dir, 'local.d', 'worker-normal.inc') do
+  template ::File.join(new_resource.rspamd_dir, 'local.d', 'worker-normal.inc') do
     cookbook 'mx'
     source 'rspamd/worker-normal.inc.erb'
     owner 'root'
@@ -133,7 +133,7 @@ action :setup do
     notifies :reload, 'service[rspamd]', :delayed
   end
 
-  template ::File.join(rspamd_dir, 'local.d', 'worker-proxy.inc') do
+  template ::File.join(new_resource.rspamd_dir, 'local.d', 'worker-proxy.inc') do
     cookbook 'mx'
     source 'rspamd/worker-proxy.inc.erb'
     owner 'root'
@@ -147,7 +147,7 @@ action :setup do
     notifies :reload, 'service[rspamd]', :delayed
   end
 
-  template ::File.join(rspamd_dir, 'local.d', 'logging.inc') do
+  template ::File.join(new_resource.rspamd_dir, 'local.d', 'logging.inc') do
     cookbook 'mx'
     source 'rspamd/logging.inc.erb'
     owner 'root'
@@ -157,7 +157,7 @@ action :setup do
     notifies :reload, 'service[rspamd]', :delayed
   end
 
-  template ::File.join(rspamd_dir, 'local.d', 'milter_headers.conf') do
+  template ::File.join(new_resource.rspamd_dir, 'local.d', 'milter_headers.conf') do
     cookbook 'mx'
     source 'rspamd/milter_headers.conf.erb'
     owner 'root'
@@ -167,7 +167,7 @@ action :setup do
     notifies :reload, 'service[rspamd]', :delayed
   end
 
-  template ::File.join(rspamd_dir, 'local.d', 'classifier-bayes.conf') do
+  template ::File.join(new_resource.rspamd_dir, 'local.d', 'classifier-bayes.conf') do
     cookbook 'mx'
     source 'rspamd/classifier-bayes.conf.erb'
     owner 'root'
@@ -232,7 +232,7 @@ action :setup do
     end
   end
 
-  template ::File.join(rspamd_dir, 'local.d', 'dkim_signing.conf') do
+  template ::File.join(new_resource.rspamd_dir, 'local.d', 'dkim_signing.conf') do
     cookbook 'mx'
     source 'rspamd/dkim_signing.conf.erb'
     owner 'root'
@@ -245,7 +245,7 @@ action :setup do
     notifies :reload, 'service[rspamd]', :delayed
   end
 
-  template ::File.join(rspamd_dir, 'local.d', 'arc.conf') do
+  template ::File.join(new_resource.rspamd_dir, 'local.d', 'arc.conf') do
     cookbook 'mx'
     source 'rspamd/dkim_signing.conf.erb'
     owner 'root'
@@ -253,35 +253,6 @@ action :setup do
     mode '0644'
     variables(
       dkim_data: dkim_data
-    )
-    action :create
-    notifies :reload, 'service[rspamd]', :delayed
-  end
-
-  local_wl_postmaster_map = ::File.join(rspamd_dir, 'local.d', 'local_wl_postmaster.map')
-
-  template local_wl_postmaster_map do
-    cookbook 'mx'
-    source 'rspamd/local_wl_postmaster.map.erb'
-    owner 'root'
-    group node['root_group']
-    mode '0644'
-    variables(
-      postmaster: new_resource.postmaster
-    )
-    action :create
-    notifies :reload, 'service[rspamd]', :delayed
-  end
-
-  template ::File.join(rspamd_dir, 'local.d', 'multimap.conf') do
-    cookbook 'mx'
-    source 'rspamd/multimap.conf.erb'
-    owner 'root'
-    group node['root_group']
-    mode '0644'
-    variables(
-      local_wl_postmaster_map: local_wl_postmaster_map,
-      score: new_resource.postmaster_score
     )
     action :create
     notifies :reload, 'service[rspamd]', :delayed

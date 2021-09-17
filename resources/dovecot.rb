@@ -15,6 +15,8 @@ property :db_user, String, required: true
 property :db_password, String, required: true
 property :db_root_user, String, required: true
 property :db_root_password, String, required: true
+property :db_maxconns, Integer, default: 5
+property :db_connect_timeout, Integer, default: 5
 
 property :vlt_provider, Proc, default: -> { nil }
 property :vlt_format, Integer, default: 2
@@ -99,6 +101,8 @@ action :setup do
       host: new_resource.db_host,
       port: new_resource.db_port,
       dbname: new_resource.db_name,
+      maxconns: new_resource.db_maxconns,
+      connect_timeout: new_resource.db_connect_timeout,
       vmail_uid: new_resource.vmail_state['uid'],
       vmail_gid: new_resource.vmail_state['gid']
     )
@@ -118,7 +122,9 @@ action :setup do
       password: new_resource.db_password,
       host: new_resource.db_host,
       port: new_resource.db_port,
-      dbname: new_resource.db_name
+      dbname: new_resource.db_name,
+      maxconns: new_resource.db_maxconns,
+      connect_timeout: new_resource.db_connect_timeout
     )
     sensitive true
     action :create

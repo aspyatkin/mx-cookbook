@@ -1,6 +1,6 @@
 driver = pgsql
 
-connect = host=<%= @host %> port=<%= @port %> dbname=<%= @dbname %> user=<%= @user %> password=<%= @password %>
+connect = host=<%= @host %> port=<%= @port %> dbname=<%= @dbname %> user=<%= @user %> password=<%= @password %> maxconns=<%= @maxconns %> connect_timeout=<%= @connect_timeout %>
 
 default_pass_scheme = ARGON2ID
 
